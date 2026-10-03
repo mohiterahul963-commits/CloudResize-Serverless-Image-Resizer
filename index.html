@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CloudResize — AWS Image Resizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root{
+ --bg:#060b1f;
+ --panel:rgba(14,22,52,.72);
+ --panel-2:rgba(10,16,40,.8);
+ --line:rgba(96,130,255,.22);
+ --line-soft:rgba(148,163,184,.14);
+ --text:#eef2ff;
+ --muted:#93a1c4;
+ --blue:#2f8cff;
+ --cyan:#38bdf8;
+ --violet:#8b5cf6;
+ --green:#22c55e;
+ --orange:#ff9900;
+ --red:#f87171;
+ --grad:linear-gradient(90deg,#27d3ff 0%,#4f8cff 45%,#a066ff 100%);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+ font-family:'Inter',system-ui,-apple-system,Segoe UI,Arial,sans-serif;
+ color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;
+ background:
+  radial-gradient(900px 500px at 12% -5%,rgba(37,99,235,.38),transparent 60%),
+  radial-gradient(900px 600px at 100% 10%,rgba(124,58,237,.42),transparent 60%),
+  radial-gradient(700px 500px at 50% 100%,rgba(79,70,229,.25),transparent 60%),
+  var(--bg);
+ background-attachment:fixed;overflow-x:hidden
+}
+.wrap{width:min(1240px,94%);margin:auto}
+svg.i{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* ---------- Header ---------- */
+header{
+ position:sticky;top:0;z-index:60;border-bottom:1px solid var(--line);
+ background:rgba(6,11,31,.78);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)
+}
+.nav{display:flex;align-items:center;gap:22px;height:66px}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit}
+.brand-icon{font-size:40px;color:#38a8ff;filter:drop-shadow(0 4px 14px rgba(56,168,255,.55))}
+.brand-icon svg{fill:url(#cg);stroke:none}
+.brand-name{font-size:28px;font-weight:800;letter-spacing:-.03em}
+.brand-name span{color:#33b4ff}
+.tagline{font-size:13.5px;color:#cbd5f5;padding-left:20px;margin-left:2px;white-space:nowrap}
+.nav-links{margin-left:auto;display:flex;gap:6px;height:100%}
+.nav-links a{
+ display:flex;align-items:center;gap:9px;padding:0 20px;color:#cdd7f6;text-decoration:none;
+ font-size:14.5px;font-weight:500;position:relative;transition:.2s
+}
+.nav-links a:hover{color:#fff}
+.nav-links a.active{color:#fff;background:linear-gradient(180deg,transparent,rgba(47,140,255,.14))}
+.nav-links a.active::after{content:"";position:absolute;left:12px;right:12px;bottom:0;height:3px;border-radius:3px;background:var(--cyan);box-shadow:0 0 12px var(--cyan)}
+.nav-links a.active svg{color:var(--cyan)}
+.nav-links svg{font-size:19px}
+.aws-badge{
+ display:flex;align-items:center;gap:10px;padding:9px 18px;border-radius:14px;
+ border:1px solid rgba(255,153,0,.55);background:rgba(255,153,0,.07);
+ font-size:12.5px;color:#ffd9a0;font-weight:600;white-space:nowrap;margin-left:14px
+}
+.aws-badge b{font-size:18px;color:#ffb42e;letter-spacing:-.02em}
+.aws-badge svg{font-size:20px;color:#ffb42e}
+
+/* ---------- Hero ---------- */
+.hero{padding:34px 0 22px;display:grid;grid-template-columns:1fr 1.05fr;gap:30px;align-items:center}
+.hero h1{font-size:clamp(40px,5.2vw,62px);line-height:1.03;font-weight:800;letter-spacing:-.04em;margin-bottom:16px}
+.hero h1 span{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{max-width:470px;color:#a9b6da;font-size:16px;line-height:1.7;margin-bottom:22px}
+.chips{display:flex;gap:12px;flex-wrap:wrap}
+.chip{
+ display:inline-flex;align-items:center;gap:9px;padding:10px 18px;border-radius:999px;
+ background:rgba(30,45,100,.55);border:1px solid var(--line);font-size:13.5px;font-weight:500
+}
+.chip svg{color:var(--cyan);font-size:16px}
+
+.hero-art{position:relative;height:260px;display:flex;align-items:center;justify-content:center}
+.cloud{position:absolute;left:4%;top:14px;width:360px;height:230px;opacity:.95}
+.cloud i{position:absolute;border-radius:50%;background:linear-gradient(160deg,#1d3a9e,#2a1f78)}
+.cloud i:nth-child(1){width:120px;height:120px;left:0;bottom:30px}
+.cloud i:nth-child(2){width:170px;height:170px;left:90px;bottom:30px;top:auto}
+.cloud i:nth-child(3){width:120px;height:120px;right:10px;bottom:20px;background:linear-gradient(160deg,#243fa8,#341f86)}
+.cloud i:nth-child(4){width:260px;height:70px;left:40px;bottom:0;border-radius:40px}
+.main-card{
+ position:absolute;left:12%;top:12px;width:250px;height:178px;border-radius:14px;
+ padding:5px;background:linear-gradient(135deg,rgba(255,255,255,.85),rgba(160,200,255,.4));
+ box-shadow:0 0 0 1px rgba(255,255,255,.4),0 30px 60px rgba(0,0,0,.55),0 0 50px rgba(56,168,255,.35);
+ transform:perspective(900px) rotateY(-14deg) rotateZ(-2deg);overflow:hidden
+}
+.main-card svg.scene{border-radius:10px}
+.arrow{
+ position:absolute;left:49%;top:106px;width:80px;height:3px;
+ background:repeating-linear-gradient(90deg,#2f8cff 0 12px,transparent 12px 18px)
+}
+.arrow::after{
+ content:"";position:absolute;right:-6px;top:-8px;width:0;height:0;
+ border-left:16px solid #2f8cff;border-top:9.5px solid transparent;border-bottom:9.5px solid transparent
+}
+.thumbs{
+ position:absolute;right:0;top:0;height:100%;display:flex;flex-direction:column;justify-content:space-between;
+ padding:2px 0 2px 22px;border-left:1px dashed rgba(96,130,255,.4);border-radius:0 0 0 24px
+}
+.thumb{display:flex;align-items:center;gap:14px}
+.thumb .t{border:2px solid rgba(255,255,255,.9);border-radius:6px;overflow:hidden;box-shadow:0 8px 22px rgba(0,0,0,.5);background:#0b1430}
+.thumb .t svg.scene{display:block;width:100%;height:100%}
+.thumb:nth-child(1) .t{width:68px;height:52px}
+.thumb:nth-child(2) .t{width:100px;height:66px}
+.thumb:nth-child(3) .t{width:130px;height:78px}
+.thumb b{display:block;color:#5bc0ff;font-size:15px;font-weight:600}
+.thumb small{display:block;color:#cbd5f5;font-size:12.5px;margin-top:3px}
+svg.scene{width:100%;height:100%;display:block}
+
+/* ---------- Upload ---------- */
+#upload{padding:6px 0 14px}
+.drop-outer{padding:2px;border-radius:18px;background:linear-gradient(120deg,#2f8cff,#8b5cf6 55%,#2f8cff);box-shadow:0 0 40px rgba(79,70,229,.35)}
+.upload-box{
+ border-radius:16px;padding:30px 20px 24px;text-align:center;position:relative;
+ background:linear-gradient(180deg,#0a1235,#12154a);transition:.25s
+}
+.upload-box::before{content:"";position:absolute;inset:8px;border:1.5px dashed rgba(120,150,255,.5);border-radius:11px;pointer-events:none;transition:.25s}
+.upload-box.dragover{background:linear-gradient(180deg,#0d1a52,#1a1d66)}
+.upload-box.dragover::before{border-color:var(--cyan)}
+.up-icon{font-size:42px;color:#38a8ff;margin-bottom:6px;display:inline-block;filter:drop-shadow(0 0 14px rgba(56,168,255,.6))}
+.up-icon svg{stroke-width:1.8}
+.upload-box h2{font-size:18px;font-weight:700;margin-bottom:4px}
+.upload-box .or{font-size:11.5px;color:var(--muted);margin-bottom:10px}
+.upload-btn{
+ display:inline-flex;align-items:center;gap:9px;padding:11px 24px;border:0;border-radius:999px;
+ background:linear-gradient(90deg,#2f8cff,#3b6cff);color:#fff;font-weight:600;font-size:14px;
+ cursor:pointer;font-family:inherit;box-shadow:0 8px 24px rgba(47,140,255,.5);transition:.2s
+}
+.upload-btn:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(47,140,255,.65)}
+.upload-btn svg{font-size:16px}
+#fileInput{display:none}
+.formats{margin-top:12px;font-size:12px;color:#b4c0e4}
+.formats i{font-style:normal;margin:0 8px;color:var(--muted)}
+
+/* ---------- Status ---------- */
+.status{
+ position:relative;display:flex;align-items:center;gap:12px;padding:11px 16px;margin:14px 0;
+ border-radius:12px;font-size:13px;overflow:hidden;overflow-wrap:anywhere;line-height:1.5;
+ background:rgba(8,40,52,.7);border:1px solid rgba(34,197,94,.55);color:#d7fbe4;
+ box-shadow:0 0 24px rgba(34,197,94,.12)
+}
+.st-icon{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;flex:none;font-size:15px;background:var(--green);color:#052e16}
+.st-icon svg{stroke-width:3}
+.status.loading{background:rgba(10,30,70,.75);border-color:rgba(56,168,255,.55);color:#cfe9ff;box-shadow:0 0 24px rgba(56,168,255,.12)}
+.status.loading .st-icon{background:transparent;border:3px solid rgba(56,168,255,.25);border-top-color:var(--cyan);animation:spin .9s linear infinite}
+.status.loading .st-icon svg{display:none}
+.status.error{background:rgba(70,14,24,.6);border-color:rgba(248,113,113,.6);color:#fecaca;box-shadow:0 0 24px rgba(248,113,113,.12)}
+.status.error .st-icon{background:var(--red);color:#450a0a}
+.st-bar{position:absolute;left:0;bottom:0;height:2px;width:35%;background:var(--grad);display:none;animation:slide 1.4s ease-in-out infinite}
+.status.loading .st-bar{display:block}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes slide{0%{left:-35%}100%{left:100%}}
+
+/* ---------- Panels ---------- */
+.panel{
+ background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;
+ backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)
+}
+.panel-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.panel-head>svg{font-size:30px;color:#39a8ff}
+.panel-head h2{font-size:17px;font-weight:700;letter-spacing:-.01em}
+.panel-head p{font-size:12px;color:#b4c0e4;margin-top:2px}
+
+.main-grid{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,2.35fr);gap:16px;margin-bottom:14px}
+.result-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+
+.sub{
+ border:1px solid var(--line);border-radius:14px;padding:12px;min-width:0;
+ background:linear-gradient(180deg,rgba(18,26,66,.7),rgba(12,18,48,.7));transition:.25s
+}
+.sub:hover{border-color:rgba(79,140,255,.6);transform:translateY(-3px);box-shadow:0 18px 40px rgba(0,0,0,.4)}
+.sub-head{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.sub-head>svg{font-size:19px;color:#39a8ff}
+.sub-head b{font-size:14.5px;font-weight:700}
+.tag{margin-left:auto;padding:3px 10px;border-radius:999px;font-size:10.5px;font-weight:700;color:#fff;white-space:nowrap}
+.tag.s{background:#2f8cff}.tag.m{background:#8b5cf6}.tag.l{background:#22c55e}
+.sub:nth-child(2)>.sub-head>svg{color:#a78bfa}
+.sub:nth-child(3)>.sub-head>svg{color:#34d399}
+
+.image-stage{
+ height:170px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+ overflow:hidden;position:relative;border:1px solid rgba(96,130,255,.35);
+ background:repeating-conic-gradient(#0b1332 0% 25%,#0f1840 0% 50%) 50% / 16px 16px
+}
+.image-stage.big{height:180px}
+.ph{position:absolute;inset:0;opacity:.28;filter:saturate(.5)}
+.ph::after{content:"No image yet";position:absolute;left:0;right:0;bottom:8px;text-align:center;font-size:11px;font-weight:600;color:#cbd5f5;letter-spacing:.04em}
+.image-stage.has-img .ph{display:none}
+.image-stage img{display:none;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;position:relative;z-index:1;animation:fadein .5s}
+.image-stage.has-img img{display:block}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.image-stage.loading::after{
+ content:"";position:absolute;inset:0;z-index:2;
+ background:linear-gradient(100deg,transparent 20%,rgba(148,180,255,.18) 50%,transparent 80%);
+ background-size:200% 100%;animation:shimmer 1.4s infinite
+}
+@keyframes shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
+
+.meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.meta div{display:flex;align-items:flex-start;gap:9px;min-width:0}
+.meta svg{font-size:20px;color:#39a8ff;margin-top:1px}
+.sub:nth-child(2) .meta svg{color:#a78bfa}
+.sub:nth-child(3) .meta svg{color:#a78bfa}
+.meta small{display:block;font-size:11px;color:#c3cdec}
+.meta span{display:block;font-size:12px;font-weight:600;color:#eef2ff;margin-top:2px;overflow-wrap:anywhere}
+
+.download-btn{
+ display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;padding:10px;border-radius:9px;
+ font-size:12.5px;font-weight:600;text-decoration:none;color:#9fb0d8;
+ background:rgba(60,80,150,.25);border:1px solid var(--line);pointer-events:none;transition:.2s
+}
+.download-btn.ready{pointer-events:auto;color:#fff;background:linear-gradient(90deg,#2f8cff,#7a5cf6);border-color:transparent;box-shadow:0 8px 22px rgba(79,110,255,.45)}
+.download-btn.ready:hover{transform:translateY(-2px)}
+
+/* ---------- Architecture ---------- */
+.arch{
+ display:grid;grid-template-columns:minmax(220px,1.1fr) repeat(4,minmax(0,1fr));align-items:center;
+ gap:0;padding:14px 18px;margin-bottom:6px
+}
+.arch-title{display:flex;align-items:center;gap:14px;padding-right:18px}
+.arch-title>svg{font-size:36px;color:#5aa8ff}
+.arch-title h3{font-size:15px;font-weight:700}
+.arch-title p{font-size:11.5px;color:#b4c0e4;margin-top:3px;line-height:1.45}
+.svc{display:flex;align-items:center;gap:12px;padding:4px 18px;border-left:1px solid var(--line-soft)}
+.svc-ico{
+ width:44px;height:44px;border-radius:10px;display:grid;place-items:center;flex:none;
+ font-size:24px;color:#fff;box-shadow:0 8px 20px rgba(0,0,0,.35)
+}
+.svc-ico svg{stroke-width:2.2}
+.svc-ico.s3{background:linear-gradient(135deg,#4cc65b,#2a9d3a)}
+.svc-ico.lm{background:linear-gradient(135deg,#ff9f1a,#ea6a00);font-weight:600;font-size:28px}
+.svc-ico.iam{background:linear-gradient(135deg,#ff4b5c,#c81e3a)}
+.svc-ico.cw{background:linear-gradient(135deg,#a066ff,#6d3bd8)}
+.svc b{display:block;font-size:12.5px;font-weight:700}
+.svc p{font-size:11px;color:#b4c0e4;line-height:1.4;margin-top:2px}
+
+/* ---------- Footer ---------- */
+footer{border-top:1px solid var(--line);margin-top:14px;padding:16px 0;font-size:12px;color:#8e9cc2}
+.foot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.foot b{color:#e5ebff;margin-right:8px}
+.foot i{font-style:normal;margin:0 7px;opacity:.6}
+
+/* ---------- Responsive ---------- */
+@media(max-width:1100px){
+ .tagline{display:none}
+ .main-grid{grid-template-columns:1fr}
+ .arch{grid-template-columns:1fr 1fr;gap:14px}
+ .arch-title{grid-column:1/-1}
+ .svc{border-left:0;padding:4px 0}
+}
+@media(max-width:900px){
+ .hero{grid-template-columns:1fr}
+ .hero-art{height:270px;max-width:560px;margin:0 auto;width:100%}
+ .nav-links a span{display:none}
+ .nav-links a{padding:0 12px}
+ .aws-badge{display:none}
+}
+@media(max-width:700px){
+ .result-grid{grid-template-columns:1fr}
+ .arch{grid-template-columns:1fr}
+ .main-card{width:200px;height:145px;left:2%}
+ .arrow{left:42%;width:50px}
+ .cloud{left:-4%;width:300px}
+ .thumb:nth-child(3) .t{width:100px;height:62px}
+ .thumb:nth-child(2) .t{width:80px;height:54px}
+ .thumb:nth-child(1) .t{width:56px;height:44px}
+ .brand-name{font-size:22px}
+ .brand-icon{font-size:32px}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+
+<body id="top">
+
+<!-- SVG sprite -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+ <defs>
+  <linearGradient id="cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4fd1ff"/><stop offset="1" stop-color="#2f6bff"/></linearGradient>
+  <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4aa6ec"/><stop offset="1" stop-color="#c4e5fa"/></linearGradient>
+  <linearGradient id="lake" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f9fcb"/><stop offset="1" stop-color="#1c6a98"/></linearGradient>
+
+  <symbol id="scene" viewBox="0 0 160 100" preserveAspectRatio="xMidYMid slice">
+   <rect width="160" height="100" fill="url(#sky)"/>
+   <ellipse cx="30" cy="14" rx="16" ry="4.5" fill="#fff" opacity=".85"/>
+   <ellipse cx="124" cy="10" rx="20" ry="4" fill="#fff" opacity=".8"/>
+   <ellipse cx="100" cy="20" rx="12" ry="3" fill="#fff" opacity=".6"/>
+   <polygon points="0,64 24,40 42,52 62,34 80,64" fill="#6f89ab"/>
+   <polygon points="92,64 118,36 138,50 160,38 160,64" fill="#6f89ab"/>
+   <polygon points="56,64 80,12 108,64" fill="#8197b6"/>
+   <polygon points="80,12 70,31 76,27 81,34 87,28 93,33" fill="#fff"/>
+   <polygon points="80,12 108,64 96,64 88,40" fill="#6a7fa0" opacity=".55"/>
+   <path d="M0 66 L5 54 L10 66 L15 56 L20 66 L25 53 L30 66 L35 57 L40 66 L45 54 L50 66 L55 56 L60 66 L65 53 L70 66 L75 57 L80 66 L85 54 L90 66 L95 56 L100 66 L105 53 L110 66 L115 57 L120 66 L125 54 L130 66 L135 56 L140 66 L145 53 L150 66 L155 57 L160 66 Z" fill="#2b6b3b"/>
+   <path d="M20 66 L24 58 L28 66 Z M100 66 L104 57 L108 66 Z M132 66 L136 58 L140 66 Z" fill="#c9a227" opacity=".85"/>
+   <rect y="66" width="160" height="34" fill="url(#lake)"/>
+   <polygon points="56,66 80,98 108,66" fill="#a9bfd9" opacity=".32"/>
+   <path d="M0 66 L5 78 L10 66 L15 76 L20 66 L25 79 L30 66 L35 75 L40 66 L45 78 L50 66 L55 76 L60 66 L65 79 L70 66 L75 75 L80 66 L85 78 L90 66 L95 76 L100 66 L105 79 L110 66 L115 75 L120 66 L125 78 L130 66 L135 76 L140 66 L145 79 L150 66 L155 75 L160 66 Z" fill="#1f5a3a" opacity=".4"/>
+  </symbol>
+
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9z"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+  <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></symbol>
+  <symbol id="i-upcloud" viewBox="0 0 24 24"><path d="M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.5 8.2"/><path d="M12 12v9"/><path d="M16 16l-4-4-4 4"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+  <symbol id="i-resize" viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></symbol>
+  <symbol id="i-nodes" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="18" r="2.5"/><circle cx="19" cy="18" r="2.5"/><path d="M12 7.5v4M12 11.5l-6 4.5M12 11.5l6 4.5"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 7v6M12 17h.01"/></symbol>
+  <symbol id="i-bucket" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6l2 13c.2 1.2 2.7 2 6 2s5.8-.8 6-2l2-13"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v5M12 16h.01"/></symbol>
+ </defs>
+</svg>
+
+<header>
+ <div class="wrap nav">
+  <a class="brand" href="#top">
+   <span class="brand-icon"><svg class="i" viewBox="0 0 24 24"><use href="#i-cloud"/></svg></span>
+   <span class="brand-name">Cloud<span>Resize</span></span>
+  </a>
+  <div class="tagline">AWS Serverless Image Resizer</div>
+  <nav class="nav-links">
+   <a href="#top" class="active"><svg class="i"><use href="#i-home"/></svg><span>Home</span></a>
+   <a href="#architecture"><svg class="i"><use href="#i-info"/></svg><span>About</span></a>
+   <a href="#upload"><svg class="i"><use href="#i-gear"/></svg><span>How It Works</span></a>
+  </nav>
+  <div class="aws-badge"><svg class="i"><use href="#i-cloud"/></svg><span>Powered by</span><b>AWS</b></div>
+ </div>
+</header>
+
+<main class="wrap">
+
+ <section class="hero">
+  <div>
+   <h1>Smart Image<br><span>Resizing</span></h1>
+   <p>Upload an image and generate Small, Medium and Large optimized versions
+   using AWS serverless technology while preserving the original aspect ratio.</p>
+   <div class="chips">
+    <span class="chip"><svg class="i"><use href="#i-zap"/></svg>Fast</span>
+    <span class="chip"><svg class="i"><use href="#i-shield"/></svg>Secure</span>
+    <span class="chip"><svg class="i"><use href="#i-cloud"/></svg>Serverless</span>
+   </div>
+  </div>
+
+  <div class="hero-art" aria-hidden="true">
+   <div class="cloud"><i></i><i></i><i></i><i></i></div>
+   <div class="main-card"><svg class="scene"><use href="#scene"/></svg></div>
+   <div class="arrow"></div>
+   <div class="thumbs">
+    <div class="thumb"><div class="t"><svg class="scene"><use href="#scene"/></svg></div><div><b>Small</b><small>(400px)</small></div></div>
+    <div class="thumb"><div class="t"><svg class="scene"><use href="#scene"/></svg></div><div><b>Medium</b><small>(800px)</small></div></div>
+    <div class="thumb"><div class="t"><svg class="scene"><use href="#scene"/></svg></div><div><b>Large</b><small>(1200px)</small></div></div>
+   </div>
+  </div>
+ </section>
+
+ <section id="upload">
+  <div class="drop-outer">
+   <div class="upload-box" id="uploadBox">
+    <div class="up-icon"><svg class="i" viewBox="0 0 24 24"><use href="#i-upcloud"/></svg></div>
+    <h2>Drop your image here</h2>
+    <div class="or">or</div>
+    <label for="fileInput" class="upload-btn"><svg class="i"><use href="#i-image"/></svg>Choose Image</label>
+    <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp">
+    <div class="formats">JPG, JPEG, PNG or WEBP<i>·</i>Maximum 10 MB</div>
+   </div>
+  </div>
+
+  <div class="status success" id="status" role="status" aria-live="polite">
+   <span class="st-icon" id="statusIcon"><svg class="i"><use href="#i-check"/></svg></span>
+   <span id="statusText">Ready to process! Upload an image to get started.</span>
+   <span class="st-bar"></span>
+  </div>
+ </section>
+
+ <div class="main-grid">
+  <section class="panel original" id="originalSection">
+   <div class="panel-head">
+    <svg class="i"><use href="#i-image"/></svg>
+    <h2>Original Image</h2>
+   </div>
+   <div class="image-stage big">
+    <div class="ph"><svg class="scene"><use href="#scene"/></svg></div>
+    <img id="originalImage" alt="Original uploaded image">
+   </div>
+   <div class="meta">
+    <div><svg class="i"><use href="#i-image"/></svg><p><small>Dimensions</small><span id="originalDimensions">—</span></p></div>
+    <div><svg class="i"><use href="#i-file"/></svg><p><small>File Size</small><span id="originalFileSize">—</span></p></div>
+   </div>
+  </section>
+
+  <section class="panel results" id="resultsSection">
+   <div class="panel-head">
+    <svg class="i"><use href="#i-resize"/></svg>
+    <div>
+     <h2>Resized Images</h2>
+     <p>Three optimized sizes generated by AWS Lambda</p>
+    </div>
+   </div>
+
+   <div class="result-grid">
+    <div class="sub">
+     <div class="sub-head"><svg class="i"><use href="#i-image"/></svg><b>Small</b><span class="tag s">400px max</span></div>
+     <div class="image-stage">
+      <div class="ph"><svg class="scene"><use href="#scene"/></svg></div>
+      <img id="smallImage" alt="Small resized image">
+     </div>
+     <div class="meta">
+      <div><svg class="i"><use href="#i-image"/></svg><p><small>Dimensions</small><span id="smallDimensions">—</span></p></div>
+      <div><svg class="i"><use href="#i-file"/></svg><p><small>File Size</small><span id="smallFileSize">—</span></p></div>
+     </div>
+     <a id="smallDownload" class="download-btn" href="#" aria-disabled="true"><svg class="i"><use href="#i-download"/></svg>Download Small</a>
+    </div>
+
+    <div class="sub">
+     <div class="sub-head"><svg class="i"><use href="#i-image"/></svg><b>Medium</b><span class="tag m">800px max</span></div>
+     <div class="image-stage">
+      <div class="ph"><svg class="scene"><use href="#scene"/></svg></div>
+      <img id="mediumImage" alt="Medium resized image">
+     </div>
+     <div class="meta">
+      <div><svg class="i"><use href="#i-image"/></svg><p><small>Dimensions</small><span id="mediumDimensions">—</span></p></div>
+      <div><svg class="i"><use href="#i-file"/></svg><p><small>File Size</small><span id="mediumFileSize">—</span></p></div>
+     </div>
+     <a id="mediumDownload" class="download-btn" href="#" aria-disabled="true"><svg class="i"><use href="#i-download"/></svg>Download Medium</a>
+    </div>
+
+    <div class="sub">
+     <div class="sub-head"><svg class="i"><use href="#i-image"/></svg><b>Large</b><span class="tag l">1200px max</span></div>
+     <div class="image-stage">
+      <div class="ph"><svg class="scene"><use href="#scene"/></svg></div>
+      <img id="largeImage" alt="Large resized image">
+     </div>
+     <div class="meta">
+      <div><svg class="i"><use href="#i-image"/></svg><p><small>Dimensions</small><span id="largeDimensions">—</span></p></div>
+      <div><svg class="i"><use href="#i-file"/></svg><p><small>File Size</small><span id="largeFileSize">—</span></p></div>
+     </div>
+     <a id="largeDownload" class="download-btn" href="#" aria-disabled="true"><svg class="i"><use href="#i-download"/></svg>Download Large</a>
+    </div>
+   </div>
+  </section>
+ </div>
+
+ <section class="panel arch" id="architecture">
+  <div class="arch-title">
+   <svg class="i"><use href="#i-nodes"/></svg>
+   <div>
+    <h3>Serverless Architecture</h3>
+    <p>AWS services involved in the image-processing workflow</p>
+   </div>
+  </div>
+  <div class="svc">
+   <div class="svc-ico s3"><svg class="i"><use href="#i-bucket"/></svg></div>
+   <div><b>Amazon S3</b><p>Stores original and resized image files.</p></div>
+  </div>
+  <div class="svc">
+   <div class="svc-ico lm">λ</div>
+   <div><b>AWS Lambda</b><p>Processes uploaded images automatically.</p></div>
+  </div>
+  <div class="svc">
+   <div class="svc-ico iam"><svg class="i"><use href="#i-lock"/></svg></div>
+   <div><b>AWS IAM</b><p>Controls access to AWS resources.</p></div>
+  </div>
+  <div class="svc">
+   <div class="svc-ico cw"><svg class="i"><use href="#i-cloud"/></svg></div>
+   <div><b>CloudWatch</b><p>Provides execution logs and monitoring.</p></div>
+  </div>
+ </section>
+</main>
+
+<footer>
+ <div class="wrap foot">
+  <div><b>CloudResize</b>· AWS Serverless Image Resizer</div>
+  <div>S3<i>·</i>Lambda<i>·</i>API Gateway<i>·</i>IAM<i>·</i>CloudWatch</div>
+ </div>
+</footer>
+
+<script>
+"use strict";
+
+const API_BASE = "https://kdratwadu9.execute-api.ap-south-1.amazonaws.com";
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+const fileInput = document.getElementById("fileInput");
+const uploadBox = document.getElementById("uploadBox");
+const statusBox = document.getElementById("status");
+const statusIcon = document.getElementById("statusIcon");
+const statusText = document.getElementById("statusText");
+const SIZES = ["small", "medium", "large"];
+
+let requestNumber = 0;
+let originalObjectUrl = null;
+
+const ICONS = {
+ success: '<svg class="i"><use href="#i-check"/></svg>',
+ loading: '<svg class="i"><use href="#i-check"/></svg>',
+ error: '<svg class="i"><use href="#i-alert"/></svg>'
+};
+
+function showStatus(message, type = "loading") {
+ statusText.textContent = message;
+ statusBox.className = "status " + type;
+ statusIcon.innerHTML = ICONS[type] || ICONS.loading;
+}
+
+function formatFileSize(bytes) {
+ if (bytes < 1024) return `${bytes} Bytes`;
+ if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+ return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+function stageOf(imgId) {
+ return document.getElementById(imgId).closest(".image-stage");
+}
+
+function setStageLoading(name, loading) {
+ stageOf(name + "Image").classList.toggle("loading", loading);
+}
+
+function resetResults() {
+ SIZES.forEach(name => {
+  const img = document.getElementById(name + "Image");
+  img.removeAttribute("src");
+  stageOf(name + "Image").classList.remove("has-img", "loading");
+  document.getElementById(name + "Dimensions").textContent = "—";
+  document.getElementById(name + "FileSize").textContent = "—";
+
+  const link = document.getElementById(name + "Download");
+  link.removeAttribute("href");
+  link.classList.remove("ready");
+  link.setAttribute("aria-disabled", "true");
+ });
+
+ const orig = document.getElementById("originalImage");
+ orig.removeAttribute("src");
+ stageOf("originalImage").classList.remove("has-img");
+ document.getElementById("originalDimensions").textContent = "—";
+ document.getElementById("originalFileSize").textContent = "—";
+
+ if (originalObjectUrl) {
+  URL.revokeObjectURL(originalObjectUrl);
+  originalObjectUrl = null;
+ }
+}
+
+function showOriginal(file) {
+ const img = document.getElementById("originalImage");
+ originalObjectUrl = URL.createObjectURL(file);
+
+ img.onload = () => {
+  stageOf("originalImage").classList.add("has-img");
+  document.getElementById("originalDimensions").textContent =
+   `${img.naturalWidth} × ${img.naturalHeight} px`;
+  document.getElementById("originalFileSize").textContent = formatFileSize(file.size);
+ };
+
+ img.src = originalObjectUrl;
+}
+
+function getImageInfo(data, size) {
+ const value = data?.[size];
+
+ if (typeof value === "string") return { url: value };
+
+ if (value && typeof value === "object") {
+  return {
+   url: value.url || value.imageUrl || value.image_url ||
+        value.downloadUrl || value.download_url || value.key || value.location,
+   width: value.width,
+   height: value.height,
+   sizeBytes: value.sizeBytes || value.size_bytes
+  };
+ }
+
+ return null;
+}
+
+function resolveImageUrl(value) {
+ if (!value) return null;
+
+ try {
+  const url = new URL(value, API_BASE);
+  if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+  return url.href;
+ } catch {
+  return null;
+ }
+}
+
+// Best-effort file size when the API doesn't return one.
+async function fetchSizeInto(url, element) {
+ try {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error("bad response");
+  const blob = await r.blob();
+  element.textContent = formatFileSize(blob.size);
+ } catch {
+  element.textContent = "Ready";
+ }
+}
+
+async function displayResult(size, info) {
+ const imageElement = document.getElementById(size + "Image");
+ const dimensionsElement = document.getElementById(size + "Dimensions");
+ const fileSizeElement = document.getElementById(size + "FileSize");
+ const downloadElement = document.getElementById(size + "Download");
+
+ if (!info || !info.url) {
+  dimensionsElement.textContent = "URL not returned";
+  fileSizeElement.textContent = "Check API";
+  setStageLoading(size, false);
+  return;
+ }
+
+ const url = resolveImageUrl(info.url);
+
+ if (!url) {
+  dimensionsElement.textContent = "Invalid URL";
+  setStageLoading(size, false);
+  return;
+ }
+
+ imageElement.onload = () => {
+  setStageLoading(size, false);
+  stageOf(size + "Image").classList.add("has-img");
+  dimensionsElement.textContent =
+   `${imageElement.naturalWidth} × ${imageElement.naturalHeight} px`;
+
+  if (info.sizeBytes) {
+   fileSizeElement.textContent = formatFileSize(info.sizeBytes);
+  } else {
+   fileSizeElement.textContent = "…";
+   fetchSizeInto(url, fileSizeElement);
+  }
+ };
+
+ imageElement.onerror = () => {
+  setStageLoading(size, false);
+  dimensionsElement.textContent = "Load failed";
+  fileSizeElement.textContent = "Check CORS / S3";
+ };
+
+ imageElement.src = url;
+ downloadElement.href = url;
+ downloadElement.target = "_blank";
+ downloadElement.rel = "noopener noreferrer";
+ downloadElement.classList.add("ready");
+ downloadElement.removeAttribute("aria-disabled");
+}
+
+async function processImage(file) {
+ if (!file) return;
+
+ if (!ALLOWED_TYPES.includes(file.type)) {
+  showStatus("Please select a JPG, PNG or WEBP image.", "error");
+  return;
+ }
+
+ if (file.size > MAX_FILE_SIZE) {
+  showStatus("Image exceeds 10 MB. Please choose a smaller image.", "error");
+  return;
+ }
+
+ const currentRequest = ++requestNumber;
+
+ resetResults();
+ showOriginal(file);
+ SIZES.forEach(n => setStageLoading(n, true));
+ showStatus("Step 1/4 · Requesting upload URL from AWS...");
+
+ fileInput.disabled = true;
+
+ try {
+  // 1. Ask API Gateway for a presigned S3 URL.
+  const response = await fetch(`${API_BASE}/upload`, {
+   method: "POST",
+   headers: { "Content-Type": "application/json" },
+   body: JSON.stringify({
+    filename: file.name,
+    contentType: file.type
+   })
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+   throw new Error(data.error || data.message || `Upload API failed: HTTP ${response.status}`);
+  }
+
+  if (!data.uploadUrl || !data.key) {
+   throw new Error("API did not return uploadUrl or key. Check the Lambda response.");
+  }
+
+  if (currentRequest !== requestNumber) return;
+
+  // 2. Upload the actual image directly to S3.
+  showStatus("Step 2/4 · Uploading image to S3...");
+
+  const s3Response = await fetch(data.uploadUrl, {
+   method: "PUT",
+   headers: { "Content-Type": data.contentType || file.type },
+   body: file
+  });
+
+  if (!s3Response.ok) {
+   throw new Error(`S3 upload failed: HTTP ${s3Response.status}. Check S3 CORS.`);
+  }
+
+  // 3. Poll results until Lambda creates all three images.
+  showStatus("Step 3/4 · Image uploaded. Waiting for Lambda to create resized images...");
+
+  let resultsData = null;
+  let allReady = false;
+
+  for (let attempt = 0; attempt < 30; attempt++) {
+   if (currentRequest !== requestNumber) return;
+
+   const resultsResponse = await fetch(
+    `${API_BASE}/results?key=${encodeURIComponent(data.key)}`
+   );
+
+   resultsData = await resultsResponse.json();
+
+   if (!resultsResponse.ok) {
+    throw new Error(
+     resultsData.error || resultsData.message ||
+     `Results API failed: HTTP ${resultsResponse.status}`
+    );
+   }
+
+   // Expected: { results: { small: {ready:true,url:"..."}, ... } }
+   const images = resultsData.results || resultsData;
+
+   allReady = SIZES.every(size =>
+    images[size]?.ready === true && images[size]?.url
+   );
+
+   if (allReady) {
+    resultsData = { ...resultsData, results: images };
+    break;
+   }
+
+   await new Promise(resolve => setTimeout(resolve, 2000));
+  }
+
+  if (currentRequest !== requestNumber) return;
+
+  if (!allReady) {
+   throw new Error(
+    "Resizing did not finish within 60 seconds. Check Lambda CloudWatch logs and S3 output files."
+   );
+  }
+
+  // 4. Display and enable download for each resized image.
+  showStatus("Step 4/4 · Loading resized images...");
+  await Promise.all(
+   SIZES.map(size => displayResult(size, getImageInfo(resultsData.results, size)))
+  );
+
+  showStatus("Success! Small, Medium and Large images are ready.", "success");
+
+ } catch (error) {
+  if (currentRequest !== requestNumber) return;
+
+  console.error("CloudResize error:", error);
+  SIZES.forEach(n => setStageLoading(n, false));
+  showStatus(
+   `Could not process image: ${error.message}. Check browser Console, API CORS and Lambda CloudWatch logs.`,
+   "error"
+  );
+
+ } finally {
+  if (currentRequest === requestNumber) {
+   fileInput.disabled = false;
+  }
+ }
+}
+
+fileInput.addEventListener("change", event => {
+ const file = event.target.files[0];
+ if (file) processImage(file);
+ // Allow selecting the same file again.
+ fileInput.value = "";
+});
+
+uploadBox.addEventListener("dragover", event => {
+ event.preventDefault();
+ uploadBox.classList.add("dragover");
+});
+
+uploadBox.addEventListener("dragleave", () => {
+ uploadBox.classList.remove("dragover");
+});
+
+uploadBox.addEventListener("drop", event => {
+ event.preventDefault();
+ uploadBox.classList.remove("dragover");
+
+ const file = event.dataTransfer.files[0];
+ if (file) processImage(file);
+});
+</script>
+</body>
+</html>
