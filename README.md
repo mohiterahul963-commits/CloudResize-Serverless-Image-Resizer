@@ -1,5 +1,4 @@
 <img width="1876" height="906" alt="Screenshot 2026-10-03 203222" src="https://github.com/user-attachments/assets/4c20a262-a050-41fc-b16f-be4a7274e470" />
-![Uploading Screenshot 2026-10-03 203243.png…]()
 
 
 # CloudResize – Serverless Image Resizer
